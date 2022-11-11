@@ -22,7 +22,7 @@ namespace WPF_ChatUI.MVVM.Model
         //relative path to save files and etc
         const string relativePath = @"DownloadFiles\";
 
-        //bot token
+        //bot token: insert your bot token here
         const string botToken = "5201175628:AAHf_MxWSWsg8Qbz3e0zOGzfV2It8DtralU";
 
         public string FullPath => Path.GetFullPath(relativePath);

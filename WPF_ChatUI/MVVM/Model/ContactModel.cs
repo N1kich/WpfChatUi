@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
+
 namespace WPF_ChatUI.MVVM.Model
 {
     internal class ContactModel
@@ -15,6 +16,24 @@ namespace WPF_ChatUI.MVVM.Model
         public string UserId { get; set; }
         public string UserPath { get; set; }
         public ObservableCollection<MessageModel> Messages { get; set; }
-        public string LastMessage => Messages.Last().Message;
+
+        public long ChatId { get; set; }
+
+        public string LastMessage { get; set; }
+
+        public void GetLastMsg()
+        {
+            if (Messages.Last().Message.Length >= 22)
+            {
+                LastMessage = Messages.Last().Message.Substring(0, 19) + "...";
+            }
+            else
+            {
+                LastMessage = Messages.Last().Message;
+            }
+            
+        }
+
+        
     }
 }

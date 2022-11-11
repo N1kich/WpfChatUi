@@ -27,15 +27,6 @@ namespace WPF_ChatUI
         {
             InitializeComponent();
             mainViewModel = new MainViewModel(this);
-            //Contacts_lView.ItemsSource = mainViewModel.Contacts;
-            ////Contacts_lView.SelectedItem = mainViewModel.SelectedContact;
-            //MessageBox_lView.ItemsSource = mainViewModel.SelectedContact.Messages;
-
-            //BotAvatar_ImgB.ImageSource = mainViewModel.bot.ImageSourceAvatar;
-
-            //BotUserName_Label.DataContext = mainViewModel.Contacts;
-            //BotUserID_Label.DataContext = mainViewModel.Contacts;
-            //MessageWindow_TextBox.DataContext = mainViewModel.Message;
             this.DataContext = mainViewModel;
 
         }
@@ -71,14 +62,8 @@ namespace WPF_ChatUI
         private async void BotInitialize_Img_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             await mainViewModel.BotInitialize();
+            BotInitialize_Label.Content = "BOT IS ON";
             BotInitialize_Img.IsHitTestVisible = false;
-        }
-
-        private void Contacts_lView_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            mainViewModel.SelectedContact = (ContactModel)Contacts_lView.SelectedItem;
-        }
-
-        
+        }    
     }
 }

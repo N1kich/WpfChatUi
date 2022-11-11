@@ -37,8 +37,6 @@ namespace WPF_ChatUI.MVVM.VIewModel
         Dictionary<Emoji, string> emojis;
 
         Dictionary<string, ReplyKeyboardMarkup> keyboards;
-
-        
         #endregion
 
         //command to add messages on GUI
@@ -62,34 +60,50 @@ namespace WPF_ChatUI.MVVM.VIewModel
         public MainViewModel(MainWindow mainWindow)
         {
             //get a link on current mainWindow object
-            this.mainWindow =mainWindow;
+            this.mainWindow = mainWindow;
 
             bot = new TelegramBot();
 
-            
             Contacts = new ObservableCollection<ContactModel>();
             SelectedContact = new ContactModel();
-            SendCommand = new RelayCommand( o =>
-            {
 
-                var selectedContact = SelectedContact;
-                selectedContact.Messages.Add(new MessageModel
+            SendCommand = new RelayCommand( async o =>
+            {
+                //checking empty message from messageBox
+                if (Message == "")
                 {
-                    Username = bot.botModel.Username + " @" + bot.botModel.UserId.ToString(),
-                    UserNameColor = "Black",
-                    Time = DateTime.Now,
-                    ImageSource = bot.botModel.ImageSource,
-                    Message = Message,
-                    IsFirstMessage = true
-                }) ;
-                Message = "";
-                Console.WriteLine(selectedContact.Username.ToString());
+                    MessageBox.Show("Your message is empty!", "Warning!", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                else
+                {
+                    var selectedContact = SelectedContact;
+                    bool isFirstMessage = (selectedContact.Messages.Last().Username == bot.botModel.Username) ? false : true;
+
+                    selectedContact.Messages.Add(new MessageModel
+                    {
+                        Username = bot.botModel.Username,
+                        UserNameColor = "Black",
+                        Time = DateTime.Now,
+                        ImageSource = bot.botModel.ImageSource,
+                        Message = Message,
+                        IsFirstMessage = isFirstMessage
+                    });
+
+                    //get the last message in messageCollection: Didnt work!!!
+                    selectedContact.GetLastMsg();
+                                        
+                    if (SelectedContact.Username != bot.botModel.Username)
+                    {
+                        await bot.telegramBotUser.SendTextMessageAsync(selectedContact.ChatId, Message);
+                    }
+                    Message = "";
+                }
+                                
             });
 
-            //set up dictionaries once. emojis and markUpKeyboard
+            //set up dictionaries: emojis and markUpKeyboard
             emojis = SetEmojis();
-            //keyboards = SetBotKeyboardButtons();
-
+            keyboards = SetBotKeyboardButtons();
         }
 
 
@@ -102,6 +116,7 @@ namespace WPF_ChatUI.MVVM.VIewModel
                 AllowedUpdates = { } // receive all update types
             };
 
+            //launch bot
             bot.telegramBotUser.StartReceiving(
                 HandleUpdateAsync,
                 HandleErrorAsync,
@@ -109,20 +124,20 @@ namespace WPF_ChatUI.MVVM.VIewModel
             
             //get response from bot
             var botUser = await bot.telegramBotUser.GetMeAsync();
-
+            
             //get string path to botAvatar
             string imageBotAvatar = await GetBotProfilePhoto(botUser, bot.telegramBotUser);
 
-            bot.botModel.Username = botUser.Username + botUser.Id;
+            //fill the bot info
+            bot.botModel.Username = botUser.Username;
+            bot.botModel.UserId = botUser.Id.ToString();
             bot.botModel.ImageSource = imageBotAvatar;
             bot.GetImageSource();
-            Console.WriteLine(botUser.Username.ToString());
-            Console.WriteLine(botUser.Id.ToString());
-            Console.WriteLine(imageBotAvatar.ToString());
 
+            //add first message
             bot.botModel.Messages.Add(new MessageModel
             {
-                Username = botUser.Username + botUser.Id.ToString(),
+                Username = botUser.Username,
                 UserNameColor = "Black",
                 ImageSource = bot.botModel.ImageSource,
                 IsFirstMessage = true,
@@ -130,33 +145,34 @@ namespace WPF_ChatUI.MVVM.VIewModel
             });
 
             
+            //add information to form
             mainWindow.Dispatcher.Invoke(() =>
             {
+                bot.botModel.GetLastMsg();
                 Contacts.Add(bot.botModel);
             });
             
             Console.WriteLine($"Start listening for @{botUser.Username}");
-            
-          
         }
         
 
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            
+            //index of contact
+            int indexOfIncomingUser = default(int);
             //if update type is message, then work with message data
             if (update.Type == UpdateType.Message)
-            {
-                int indexOfIncomingUser = default(int);
+            {                
                 // if message is a text, handle it
                 if (update.Message.Type == MessageType.Text)
                 {
+                    //check the new user
                     if (isUserNew(update.Message.From.Id.ToString()))
                     {
                         await CreateNewContact(update, botClient, bot.FullPath);
                         indexOfIncomingUser = Contacts.Count - 1;
                     }
-                    else
+                    else //get the index of existing user
                     {
                         indexOfIncomingUser = GetIndexOfContactUser(update.Message.From.Id.ToString());
                     }
@@ -171,8 +187,9 @@ namespace WPF_ChatUI.MVVM.VIewModel
                 }
                 else
                 {
+                    indexOfIncomingUser = GetIndexOfContactUser(update.Message.From.Id.ToString());
                     //if message type != text, try to donwload it
-                   // await FileDownloaderHandlerAsync(botClient, update, cancellationToken, relativePath, emojis, IsMenuButtonSelected);
+                    await FileDownloaderHandlerAsync(botClient, update, cancellationToken, Contacts[indexOfIncomingUser].UserPath, indexOfIncomingUser);
                 }
 
             }
@@ -183,11 +200,21 @@ namespace WPF_ChatUI.MVVM.VIewModel
                 string fileToUpload = update.CallbackQuery.Data;
                 Console.WriteLine(fileToUpload);
 
+                indexOfIncomingUser = GetIndexOfContactUser(update.CallbackQuery.From.Id.ToString());
+
                 //upload files based on CallBack Data
-                //await UploadChoosenFileAsync(fileToUpload, relativePath, (TelegramBotClient)botClient, update);
+                await UploadChoosenFileAsync(fileToUpload, Contacts[indexOfIncomingUser].UserPath, (TelegramBotClient)botClient, update, indexOfIncomingUser);
             }
         }
 
+
+        /// <summary>
+        /// Error Handler
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="exception"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
             var ErrorMessage = exception.Message;
@@ -196,48 +223,76 @@ namespace WPF_ChatUI.MVVM.VIewModel
             return Task.CompletedTask;
         }
 
-        //Task to handle text command
+        
+
+        
+        /// <summary>
+        /// Task to handle text messages and text commands
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="cancellationToken"></param>
+        /// <param name="indexOfIncomingUser"></param>
+        /// <returns></returns>
         async Task TextOptionsAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken,int indexOfIncomingUser)
         {
-            
-
-            // rework this shit 
+     
             var messageText = update.Message.Text;
+            bool isUserSentNew = false;
+
+            //checking if the messages from the user sent in a row or its the first message after our bot response
+            if (Contacts[indexOfIncomingUser].Messages.Last().Username == bot.botModel.Username)
+            {
+                isUserSentNew = true;
+            }
+
             MessageModel messageModel = new MessageModel()
             {
                 Message = messageText,
                 ImageSource = Contacts[indexOfIncomingUser].ImageSource,
-                IsFirstMessage = true,
+                IsFirstMessage = isUserSentNew,
                 Time = DateTime.Now,
                 Username = update.Message.From.Username,
                 UserNameColor = "Black",
             };
 
-            //mainWindow.Dispatcher.Invoke(() =>
-            //{
-            //    Contacts[indexOfIncomingUser].Messages.Add(messageModel);
-            //});
-            
+            mainWindow.Dispatcher.Invoke(() =>
+            {
+                Contacts[indexOfIncomingUser].Messages.Add(messageModel);
+            });
+
             // handle text form message
             switch (messageText)
             {
                 //case to send greetigs to user
                 case "/start":
                     {
-                        //await DescriprionStartAsync(botClient, update, cancellationToken, keyboards["startButtons"], emojis);
+                        await DescriprionStartAsync(botClient, update, cancellationToken, keyboards["startButtons"], indexOfIncomingUser);
                         bot.isMenuEnabled = false;
                         break;
                     }
                 //case to send descriptions of functions which bot can process
                 case "/menu":
                     {
-                        await MenuDescriptionAsync(botClient, update, cancellationToken, keyboards["menuButtons"], emojis, bot.FullPath);
+                        await MenuDescriptionAsync(botClient, update, cancellationToken, keyboards["menuButtons"], indexOfIncomingUser);
                         bot.isMenuEnabled = true;
                         break;
                     }
                 //case to send info about
                 case "/info":
                     {
+                        mainWindow.Dispatcher.Invoke(() =>
+                        {
+                            Contacts[indexOfIncomingUser].Messages.Add(new MessageModel()
+                            {
+                                ImageSource = Contacts[indexOfIncomingUser].ImageSource,
+                                IsFirstMessage= true,
+                                Message = "test file-trading bot",
+                                Time = DateTime.Now,
+                                UserNameColor= "Black",
+                                Username = bot.botModel.Username,
+                            });
+                        });
                         await botClient.SendTextMessageAsync(update.Message.Chat.Id, "test file-trading bot", cancellationToken: cancellationToken);
                         bot.isMenuEnabled = false;
                         break;
@@ -245,21 +300,54 @@ namespace WPF_ChatUI.MVVM.VIewModel
                 //case to send list of files, this command could be invoke in /menu from keyboard button
                 case "I want to know, which files are already in the bot's storage":
                     {
-                        await SendListOfFilesAsync(bot.FullPath, (TelegramBotClient)botClient, update, cancellationToken,indexOfIncomingUser);
+                        await SendListOfFilesAsync(Contacts[indexOfIncomingUser].UserPath, (TelegramBotClient)botClient, update, cancellationToken,indexOfIncomingUser);
                         break;
                     }
                 default:
-                    Message defaultMessage = await botClient.SendTextMessageAsync(update.Message.Chat.Id, "I dont understand your commands" + emojis[Emoji.HmmEmoji] + ".\n Use keyboard buttons to navigate! But its okay! Lets chat. Feel free to write me anything" +
-                        emojis[Emoji.CoolMan]);
-                    defaultMessage = await botClient.SendStickerAsync(update.Message.Chat.Id, sticker: "CAACAgIAAxkBAAEDy3Vh-w1UvK764n4JWmM-v2e9rndxLQAC6BUAAiMlyUtQqGgG1fAXAAEjBA");
-                    break;
+                   break;
             }
         }
+        /// <summary>
+        /// sends greetings to new user, runs when bot get /start command
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="cancellationToken"></param>
+        /// <param name="keyboard"></param>
+        /// <param name="emojis"></param>
+        /// <returns></returns>
+        async Task DescriprionStartAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken, ReplyKeyboardMarkup keyboard, int indexOfIncomingUser)
+        {
+            string startDesription = "\tWelcome to the training bot!" + emojis[Emoji.CheckMark] + "\nDescription of Bot Commands below" + emojis[Emoji.Pen] +
+                "\n/start - say hi to bot and view this message" + emojis[Emoji.Pen] +
+                "\n/menu - show command keyboard" + emojis[Emoji.Pen] + "\n/info - show info about this bot" + emojis[Emoji.Pen];
 
+            mainWindow.Dispatcher.Invoke(() =>
+            {
+                Contacts[indexOfIncomingUser].Messages.Add(new MessageModel
+                {
+                    ImageSource = bot.botModel.ImageSource,
+                    Message = startDesription,
+                    IsFirstMessage = true,
+                    Time = DateTime.Now,
+                    Username = bot.botModel.Username,
+                    UserNameColor = "Black"
+                });
+            });
 
+            await botClient.SendTextMessageAsync(update.Message.Chat.Id, startDesription, replyMarkup: keyboard, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// Task to create a new ContactModel
+        /// </summary>
+        /// <param name="update"></param>
+        /// <param name="botClient"></param>
+        /// <param name="path"></param>
+        /// <returns></returns>
         async Task CreateNewContact(Update update, ITelegramBotClient botClient,string path)
         {
-
+            //crete a new user's folder
             string newUserPath = path + @"\" + update.Message.From.Username + @"\";
             Directory.CreateDirectory(newUserPath);
 
@@ -272,24 +360,39 @@ namespace WPF_ChatUI.MVVM.VIewModel
                 IsFirstMessage = true,
                 ImageSource = await GetPhotoProfile(botClient, update, newUserPath),
             };
+
             ContactModel contact = new ContactModel()
             {
-               Username = update.Message.From.Username,
-               Messages = new ObservableCollection<MessageModel> {messageModel },
-               UserId = update.Message.From.Id.ToString(),
-               UserPath = newUserPath,
-               ImageSource = messageModel.ImageSource,
+                Username = update.Message.From.Username,
+                Messages = new ObservableCollection<MessageModel> { messageModel },
+                UserId = update.Message.From.Id.ToString(),
+                UserPath = newUserPath,
+                ImageSource = messageModel.ImageSource,
+                ChatId = update.Message.Chat.Id,
             };
+
+            
             mainWindow.Dispatcher.Invoke(() =>
             {
+                contact.GetLastMsg();
                 Contacts.Add(contact);
             });
             
         }
+
+        /// <summary>
+        /// Task to download the user's avatar picture and set it to the GUI of chat app
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="userPath"></param>
+        /// <returns></returns>
         async Task<String> GetPhotoProfile(ITelegramBotClient botClient, Update update, string userPath)
         {
+            
             UserProfilePhotos userProfilePhotos = await botClient.GetUserProfilePhotosAsync(update.Message.From.Id, 0, 1);
 
+            //user profile prhotos is array of the different proportions of height and weight. Choose the smallest one
             PhotoSize[] photoSize = userProfilePhotos.Photos[0];
             var fileID = photoSize[0].FileId;
             Console.WriteLine(fileID);
@@ -298,6 +401,12 @@ namespace WPF_ChatUI.MVVM.VIewModel
             return userPath + update.Message.Chat.Username + "ProfilePic" + ".jpg";
         }
 
+        /// <summary>
+        /// Task to download bot avatar, and return string path to picture
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="botClient"></param>
+        /// <returns></returns>
         async Task<String> GetBotProfilePhoto(Telegram.Bot.Types.User user, ITelegramBotClient botClient)
         {
             UserProfilePhotos userProfilePhotos = await botClient.GetUserProfilePhotosAsync(user.Id, 0, 1);
@@ -320,7 +429,7 @@ namespace WPF_ChatUI.MVVM.VIewModel
         /// <param name="emojis"></param>
         /// <param name="Path"></param>
         /// <returns></returns>
-        static async Task MenuDescriptionAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken, ReplyKeyboardMarkup keyboard, Dictionary<Emoji, string> emojis, string Path)
+        async Task MenuDescriptionAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken, ReplyKeyboardMarkup keyboard, int indexOfUser)
         {
             string descriptionStr = $"\tOn this page you can choose following functions{emojis[Emoji.BicycleMan]}\n" +
                 $"You can store the following file types:\n{emojis[Emoji.Photo]} Photos!\n" +
@@ -331,10 +440,31 @@ namespace WPF_ChatUI.MVVM.VIewModel
                     $"{emojis[Emoji.BicycleMan]} Get the names of files from bot's storage{emojis[Emoji.BicycleMan]}\n" +
                 $"{emojis[Emoji.BicycleMan]}Download the file from storage. To begin this operations check the existing files {emojis[Emoji.BicycleMan]}";
 
-            Message MenuDescr = await botClient.SendTextMessageAsync(update.Message.Chat.Id, descriptionStr, replyMarkup: keyboard, cancellationToken: cancellationToken);
+          
 
+            mainWindow.Dispatcher.Invoke(() =>
+            {
+                Contacts[indexOfUser].Messages.Add(new MessageModel
+                {
+                    ImageSource = bot.botModel.ImageSource,
+                    IsFirstMessage = true,
+                    Time = DateTime.Now,
+                    Username = bot.botModel.Username,
+                    UserNameColor = "Black",
+                    Message = descriptionStr,
+                });
+            });
+            await botClient.SendTextMessageAsync(update.Message.Chat.Id, descriptionStr, replyMarkup: keyboard, cancellationToken: cancellationToken);
+            
         }
 
+        /// <summary>
+        /// Task to download a object from Telegram
+        /// </summary>
+        /// <param name="FileID"></param>
+        /// <param name="Path"></param>
+        /// <param name="bot"></param>
+        /// <returns></returns>
         static async Task DownloadAsync(string FileID, string Path, TelegramBotClient bot)
         {
             var fileInfo = await bot.GetFileAsync(FileID);
@@ -344,6 +474,10 @@ namespace WPF_ChatUI.MVVM.VIewModel
             fs.Close();
         }
 
+        /// <summary>
+        /// set the dictionary of emojis
+        /// </summary>
+        /// <returns></returns>
         Dictionary<Emoji, string> SetEmojis()
         {
             Dictionary<Emoji, string> emojis = new Dictionary<Emoji, string>()
@@ -363,14 +497,23 @@ namespace WPF_ChatUI.MVVM.VIewModel
             return emojis;
         }
 
-        async Task SendListOfFilesAsync(string path, TelegramBotClient bot, Update update, CancellationToken cancellationToken, int indexOfUSer)
+        /// <summary>
+        /// Task that send list of file in user's folder
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="cancellationToken"></param>
+        /// <param name="indexOfUser"></param>
+        /// <returns></returns>
+        async Task SendListOfFilesAsync(string path, TelegramBotClient botClient, Update update, CancellationToken cancellationToken, int indexOfUser)
         {
             //get files
             Dictionary<string, FileType> filesInPath = GetFileExtension(path);
 
             if (filesInPath.Count == 0)
             {
-                _ = await bot.SendTextMessageAsync(update.Message.Chat.Id, $"I dont have any files in my storage {emojis[Emoji.CoolMan]}", cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(update.Message.Chat.Id, $"I dont have any files in my storage {emojis[Emoji.CoolMan]}", cancellationToken: cancellationToken);
             }
             else
             {
@@ -382,22 +525,34 @@ namespace WPF_ChatUI.MVVM.VIewModel
                     listOfFiles += GetTheStrWithEmoji(files.Key, files.Value);
 
                 }
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    Contacts[indexOfUser].Messages.Add(new MessageModel
+                    {
+                        ImageSource = bot.botModel.ImageSource,
+                        IsFirstMessage = true,
+                        Time = DateTime.Now,
+                        Username = bot.botModel.Username,
+                        UserNameColor = "Black",
+                        Message = listOfFiles,
+                    });
+                });
                 InlineKeyboardMarkup inlineKeyboard = SetInlineKeyboards(filesInPath);
-                _ = await bot.SendTextMessageAsync(update.Message.Chat.Id, listOfFiles, replyMarkup: inlineKeyboard, cancellationToken: cancellationToken);
+                await botClient.SendTextMessageAsync(update.Message.Chat.Id, listOfFiles, replyMarkup: inlineKeyboard, cancellationToken: cancellationToken);
 
             }
 
 
-        }
+            }
 
         /// <summary>
-        /// Define fileExtension
+        /// Define fileExtension get all files in special folder and define extension
         /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
         Dictionary<string, FileType> GetFileExtension(string Path)
         {
-            // get all files in special folder and define extension
+            
             string[] fileNames = Directory.GetFiles(Path);
 
             Dictionary<string, FileType> files = new Dictionary<string, FileType>();
@@ -480,26 +635,49 @@ namespace WPF_ChatUI.MVVM.VIewModel
         /// <param name="bot"></param>
         /// <param name="update"></param>
         /// <returns></returns>
-         async Task UploadChoosenFileAsync(string fileName, string Path, TelegramBotClient bot, Update update)
+        async Task UploadChoosenFileAsync(string fileName, string Path, TelegramBotClient botClient, Update update, int indexOfIncomingUser)
         {
             string fileExtension = fileName.Substring(fileName.LastIndexOf('.'));
             FileType typeOfCallbackFile = GetFileType(fileExtension);
+            mainWindow.Dispatcher.Invoke(() =>
+            {
+                Contacts[indexOfIncomingUser].Messages.Add(new MessageModel()
+                {
+                    ImageSource = Contacts[indexOfIncomingUser].ImageSource,
+                    IsFirstMessage = true,
+                    Time = DateTime.Now,
+                    Username = Contacts[indexOfIncomingUser].Username,
+                    Message = $"I want to get {fileName} from bot's storage",
+                    UserNameColor = "Black"
+                });
+
+                Contacts[indexOfIncomingUser].Messages.Add(new MessageModel()
+                {
+                    ImageSource = bot.botModel.ImageSource,
+                    IsFirstMessage = true,
+                    Message = "Bot is sending you the choosen file",
+                    Time = DateTime.Now,
+                    Username = bot.botModel.Username,
+                    UserNameColor = "Black"
+                });
+            });
+
             using (FileStream stream = System.IO.File.OpenRead(Path + fileName))
             {
                 InputOnlineFile inputOnlineFile = new InputOnlineFile(stream, fileName);
                 switch (typeOfCallbackFile)
                 {
                     case FileType.Document:
-                        await bot.SendDocumentAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile);
+                        await botClient.SendDocumentAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile);
                         break;
                     case FileType.Audio:
-                        await bot.SendAudioAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile);
+                        await botClient.SendAudioAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile);
                         break;
                     case FileType.Video:
-                        await bot.SendVideoAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile, supportsStreaming: true);
+                        await botClient.SendVideoAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile, supportsStreaming: true);
                         break;
                     case FileType.Photo:
-                        await bot.SendPhotoAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile);
+                        await botClient.SendPhotoAsync(update.CallbackQuery.Message.Chat.Id, inputOnlineFile);
                         break;
                     default:
                         break;
@@ -507,22 +685,21 @@ namespace WPF_ChatUI.MVVM.VIewModel
             }
 
         }
-        ///// <summary>
-        ///// method to initialize keyboards
-        ///// </summary>
-        ///// <returns></returns>
-        //Dictionary<string, ReplyKeyboardMarkup> SetBotKeyboardButtons()
-        //{
-        //    Dictionary<string, ReplyKeyboardMarkup> keyboards = new Dictionary<string, ReplyKeyboardMarkup>();
-        //    {
-        //        { {  "startButtons"}, new ReplyKeyboardMarkup(new[] { new KeyboardButton[] { "/start" }, new KeyboardButton[] { "/menu" }, new KeyboardButton[] { "/info" } }) { ResizeKeyboard = true } };
-        //        { "menuButtons", new ReplyKeyboardMarkup(new[] { new KeyboardButton[] { "I want to know, which files are already in the bot's storage" } }) { ResizeKeyboard = true } };
-        //    };
+        /// <summary>
+        /// method to initialize keyboards
+        /// </summary>
+        /// <returns></returns>
+        Dictionary<string, ReplyKeyboardMarkup> SetBotKeyboardButtons()
+        {
+            Dictionary<string, ReplyKeyboardMarkup> keyboards = new Dictionary<string, ReplyKeyboardMarkup>()
+            {
+                { "startButtons", new ReplyKeyboardMarkup(new[] { new KeyboardButton[] { "/start" }, new KeyboardButton[] { "/menu" }, new KeyboardButton[] { "/info" } }) { ResizeKeyboard = true } },
+                { "menuButtons", new ReplyKeyboardMarkup(new[] { new KeyboardButton[] { "I want to know, which files are already in the bot's storage" } }) { ResizeKeyboard = true } },
+            };
 
 
-        //    return keyboards;
-
-        //}
+            return keyboards;
+        }
 
         InlineKeyboardMarkup SetInlineKeyboards(Dictionary<string, FileType> listOfFiles)
         {
@@ -595,6 +772,157 @@ namespace WPF_ChatUI.MVVM.VIewModel
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// async Task to download specific files, define type of message, then define type of files get information about it then download file
+        /// bool value uses in order to load files only after the /menu message
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="cancellationToken"></param>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        async Task FileDownloaderHandlerAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken, string Path, int indexOfIncomingUser)
+        {
+            //all supported message types
+            if (update.Message.Type == MessageType.Photo || update.Message.Type == MessageType.Video || update.Message.Type == MessageType.VideoNote || update.Message.Type == MessageType.Voice || update.Message.Type == MessageType.Document || update.Message.Type == MessageType.Audio)
+            {
+                // if user don't click /menu button yet cancel download
+                if (!bot.isMenuEnabled)
+                {                
+                    mainWindow.Dispatcher.Invoke(() =>
+                    {
+                        Contacts[indexOfIncomingUser].Messages.Add(new MessageModel
+                        {
+                            ImageSource = Contacts[indexOfIncomingUser].ImageSource,
+                            Message = $"i've sent a {update.Message.Type}",
+                            IsFirstMessage = true,
+                            Time = DateTime.Now,
+                            Username = update.Message.From.Username,
+                            UserNameColor = "Black"
+
+                        });
+
+                        Contacts[indexOfIncomingUser].Messages.Add(new MessageModel
+                        {
+                            ImageSource = bot.botModel.ImageSource,
+                            Message = $"Please choose the /menu to send and store your files in bot's files storage {emojis[Emoji.CoolMan]}",
+                            IsFirstMessage = true,
+                            Time = DateTime.Now,
+                            Username = bot.botModel.Username,
+                            UserNameColor = "Black"
+
+                        });
+                    });
+
+                    await botClient.SendTextMessageAsync(update.Message.Chat.Id, $"Please choose the /menu to send and store your files in bot's files storage {emojis[Emoji.CoolMan]}");
+                    return;
+                }
+                switch (update.Message.Type)
+                {
+                    case MessageType.Photo:
+                        {
+                            string fileID = update.Message.Photo[1].FileId;
+                            //in case when we cant get the file name from telegram, we use 3 uniqe numbers from file ID
+                            string UniqeID = fileID.Substring(fileID.Length / 2, 3);
+                            await DownloadAsync(fileID, Path + update.Message.Chat.Username + UniqeID + ".jpg", (TelegramBotClient)botClient);
+
+                            break;
+                        }
+                    case MessageType.Document:
+                        {
+                            var fileID = update.Message.Document.FileId;
+                            await DownloadAsync(fileID, Path + update.Message.Document.FileName, (TelegramBotClient)botClient);
+                            break;
+                        }
+                    case MessageType.Video:
+                        {
+                            var fileID = update.Message.Video.FileId;
+                            var fileName = update.Message.Video.FileName;
+                            await DownloadAsync(fileID, Path + fileName, (TelegramBotClient)botClient);
+                            break;
+                        }
+                    case MessageType.Audio:
+                        {
+                            var fileID = update.Message.Audio.FileId;
+                            var fileName = update.Message.Audio.FileName;
+                            await DownloadAsync(fileID, Path + fileName, (TelegramBotClient)botClient);
+                            break;
+                        }
+                    case MessageType.Voice:
+                        {
+                            var fileID = update.Message.Voice.FileId;
+                            string UniqeID = fileID.Substring(fileID.Length - 5);
+                            await DownloadAsync(fileID, Path + update.Message.Chat.Username + UniqeID + ".mp3", (TelegramBotClient)botClient);
+
+                            break;
+                        }
+                    case MessageType.VideoNote:
+                        {
+                            var fileID = update.Message.VideoNote.FileId;
+                            string UniqeID = fileID.Substring(fileID.Length - 5);
+                            await DownloadAsync(fileID, Path + update.Message.Chat.Username + UniqeID + ".mp4", (TelegramBotClient)botClient);
+
+                            break;
+                        }
+                }
+                Console.WriteLine($"Download the file from  {update.Message.Chat.Username} {update.Message.Chat.Id} - {update.Message.Type}");
+
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    Contacts[indexOfIncomingUser].Messages.Add(new MessageModel()
+                    {
+                        ImageSource= Contacts[indexOfIncomingUser].ImageSource,
+                        IsFirstMessage= true,
+                        Time = DateTime.Now,
+                        Username = update.Message.From.Username,
+                        UserNameColor = "Black",
+                        Message = $"i've sent {update.Message.Type} emojis[Emoji.Pen]"
+                    });
+
+                    Contacts[indexOfIncomingUser].Messages.Add(new MessageModel
+                    {
+                        ImageSource = bot.botModel.ImageSource,
+                        Message = $"I download the {update.Message.Type}" + emojis[Emoji.Pen],
+                        IsFirstMessage = true,
+                        Time = DateTime.Now,
+                        Username = bot.botModel.Username,
+                        UserNameColor = "Black"
+
+                    });
+                });
+                await botClient.SendTextMessageAsync(update.Message.Chat.Id, $"I download the {update.Message.Type}" + emojis[Emoji.Pen]);
+            }
+            else
+            {
+                Console.WriteLine($"Unknown type of files");
+
+                mainWindow.Dispatcher.Invoke(() =>
+                {
+                    Contacts[indexOfIncomingUser].Messages.Add(new MessageModel
+                    {
+                        ImageSource = bot.botModel.ImageSource,
+                        Message = $"Unknown type of files {emojis[Emoji.HmmEmoji]}\n You can store the following file types:\n{emojis[Emoji.Photo]} Photos!\n" +
+                            $"{emojis[Emoji.Document]} Documents!\n" +
+                            $"{emojis[Emoji.Audio]} Audio\n " +
+                            $"{emojis[Emoji.Video]} Video and VideoNotes\n" +
+                            $"{emojis[Emoji.VoiceMessage]} VoiceMessage\n",
+                        IsFirstMessage = true,
+                        Time = DateTime.Now,
+                        Username = bot.botModel.Username,
+                        UserNameColor = "Black"
+                    });
+                });
+
+                await botClient.SendTextMessageAsync(update.Message.Chat.Id, $"Unknown type of files {emojis[Emoji.HmmEmoji]}\n You can store the following file types:\n{emojis[Emoji.Photo]} Photos!\n" +
+                    $"{emojis[Emoji.Document]} Documents!\n" +
+                    $"{emojis[Emoji.Audio]} Audio\n " +
+                    $"{emojis[Emoji.Video]} Video and VideoNotes\n" +
+                    $"{emojis[Emoji.VoiceMessage]} VoiceMessage\n", cancellationToken: cancellationToken);
+            }
+
+
         }
 
         int GetIndexOfContactUser(string id )
