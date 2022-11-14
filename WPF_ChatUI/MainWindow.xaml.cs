@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -14,6 +16,11 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using WPF_ChatUI.MVVM.Model;
 using WPF_ChatUI.MVVM.VIewModel;
+using System.IO;
+using Application = System.Windows.Application;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System.Collections.ObjectModel;
 
 namespace WPF_ChatUI
 {
@@ -46,11 +53,11 @@ namespace WPF_ChatUI
 
         private void ButtonMaximaze_Click(object sender, RoutedEventArgs e)
         {
-            if (Application.Current.MainWindow.WindowState != WindowState.Maximized )
+            if (Application.Current.MainWindow.WindowState != WindowState.Maximized)
                 Application.Current.MainWindow.WindowState = WindowState.Maximized;
             else
                 Application.Current.MainWindow.WindowState = WindowState.Normal;
-            
+
         }
 
         private void ButtonClose_Click(object sender, RoutedEventArgs e)
@@ -64,6 +71,52 @@ namespace WPF_ChatUI
             await mainViewModel.BotInitialize();
             BotInitialize_Label.Content = "BOT IS ON";
             BotInitialize_Img.IsHitTestVisible = false;
-        }    
+        }
+
+        private void ButtonSaveMessages_Click(object sender, RoutedEventArgs e)
+        {
+
+            JsonSerializer serializer = new JsonSerializer();
+            serializer.NullValueHandling = NullValueHandling.Ignore;
+
+
+            using (StreamWriter sw = new StreamWriter(mainViewModel.bot.FullPath + "Contacts.json"))
+            using (JsonWriter writer = new JsonTextWriter(sw))
+            {
+                writer.Formatting = Formatting.Indented;
+                serializer.Serialize(writer, mainViewModel.Contacts);
+
+            }
+
+            //openFileDialog.Filter = "Json files (*.json)|*.json";
+
+        }
+
+        private void ButtonUploadMessages_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.InitialDirectory = mainViewModel.bot.FullPath;
+            ofd.Filter = "Json files (*.json)|*.json";
+
+            DialogResult result = ofd.ShowDialog();
+
+
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                Task.Run(() =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        ObservableCollection<ContactModel> tempContacts = JsonConvert.DeserializeObject<ObservableCollection<ContactModel>>(File.ReadAllText(ofd.FileName));
+                        mainViewModel.Contacts.Clear();
+                        foreach (var item in tempContacts)
+                        {
+                            mainViewModel.Contacts.Add(item);
+                        }
+                    });                
+                });
+            }
+
+        }
     }
 }

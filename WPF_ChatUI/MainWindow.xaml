@@ -12,71 +12,88 @@
         AllowsTransparency="True"
         ResizeMode="CanResizeWithGrip">
     <Grid>
-        
+
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
             <ColumnDefinition/>
-            
+
         </Grid.ColumnDefinitions>
 
         <Border Grid.ColumnSpan="2" Grid.Row="0"
                 Background="#FF72DAE8"
                 MouseDown="Border_MouseDown">
-            
+
             <Grid HorizontalAlignment="Stretch">
-                
+
                 <Label Content="WpfChat"
                        Foreground="Azure"
                        FontSize="16"
                        FontWeight="UltraLight"/>
-                
+
                 <StackPanel HorizontalAlignment="Right"
                             Orientation="Horizontal">
-                    
+
                     <Button Width="30" Height="30" Content="🗕"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="Azure"
                             FontWeight="Bold"
                             Click="ButtonMinimize_Click"/>
-                    
+
                     <Button Width="30" Height="30" Content="⬜"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="Azure"
                             FontWeight="Bold" 
                             Click="ButtonMaximaze_Click"/>
-                    
+
                     <Button Width="30" Height="30" Content="❌"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="Azure"
                             FontWeight="Bold" Click="ButtonClose_Click"/>
-                    
+
                 </StackPanel>
             </Grid>
         </Border>
 
         <Grid Grid.Row="1" Grid.Column="0"
                Background="#FF5AC2DE">
-            
+
             <Grid.RowDefinitions>
                 <RowDefinition  Height="50"/>
                 <RowDefinition/>
                 <RowDefinition Height="70"/>
             </Grid.RowDefinitions>
-            
-            <Label Content="Contacts"
+
+            <StackPanel Orientation="Horizontal">
+
+                <Label Content="Contacts"
                    VerticalAlignment="Center"
                    FontSize="20"
                    FontWeight="UltraLight"
                    Foreground ="Azure"
                    Margin=" 8,0,0,0"/>
+
+                <Button Width="45" Margin="65,0,0,0" Name="UploadMessages_btn" Click="ButtonUploadMessages_Click" Foreground="Transparent" BorderBrush="Transparent" Background="#FF5AC2DE">
+                    <StackPanel>
+                        <Image Source ="./Icons/upload1.png" Height="37" Width="39"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Width="45" Margin="3,0,0,0" Name="SaveMesssages_btn" Foreground="Transparent" BorderBrush="Transparent" Click="ButtonSaveMessages_Click" Background="#FF5AC2DE">
+                    <StackPanel>
+                        <Image Source ="./Icons/download.png" Height="37" Width="39"/>
+                    </StackPanel>
+                </Button>
+
+            </StackPanel>
+
 
             <ListView ItemsSource="{Binding Contacts}"
                       SelectedItem="{Binding SelectedContact}"
@@ -100,7 +117,7 @@
 
 
                 <StackPanel VerticalAlignment="Center" >
-                    
+
                     <Label Content="{Binding Contacts[0].Username}"
                            Foreground="#444444"
                            FontWeight="Bold"
@@ -110,10 +127,10 @@
                            Foreground="#444444"
                            FontWeight="SemiBold"
                            Margin="0,-8,0,-5"/>
-                    
+
                 </StackPanel>
             </StackPanel>
-            
+
         </Grid>
 
 
@@ -163,14 +180,7 @@
                         </StackPanel>
 
                     </StackPanel>
-                    
-                    <StackPanel Grid.Column="0">
-                        <Image x:Name="UploadMessageHistory_Img" Width="60" Height="60"
-                               RenderOptions.BitmapScalingMode="Fant"
-                               Source="./Icons/robot.png" MouseLeftButtonDown="BotInitialize_Img_MouseLeftButtonDown"
-                               />
-                    </StackPanel>
-                    
+
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right">
@@ -188,7 +198,7 @@
                                Source="./Icons/robot.png" MouseLeftButtonDown="BotInitialize_Img_MouseLeftButtonDown"
                                />
                     </StackPanel>
-                    
+
                 </Grid>
             </Border>
 
@@ -233,12 +243,12 @@
                     </Image>
 
                 </StackPanel>
-                
+
             </Grid>
 
         </Grid>
 
-        
-        
+
+
     </Grid>
 </Window>

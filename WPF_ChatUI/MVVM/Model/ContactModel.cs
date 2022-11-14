@@ -9,6 +9,7 @@ using System.Windows.Media;
 
 namespace WPF_ChatUI.MVVM.Model
 {
+    [Serializable]
     internal class ContactModel
     {
         public string Username { get; set; }

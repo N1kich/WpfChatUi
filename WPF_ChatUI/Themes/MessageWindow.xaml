@@ -4,7 +4,7 @@
     <Style x:Key="MessageWindow" TargetType="TextBox">
 
         <Setter Property="Foreground" Value="#FFCCFBFF"/>
-        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontWeight" Value="UltraLight"/>
         <Setter Property="Margin" Value="8"/>
 
         <Setter Property="Template">

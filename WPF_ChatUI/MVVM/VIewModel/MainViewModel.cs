@@ -29,6 +29,7 @@ namespace WPF_ChatUI.MVVM.VIewModel
         public ObservableCollection<MessageModel> Messages { get; set; }
 
         //collection of users
+        
         public ObservableCollection<ContactModel> Contacts { get; set; }
 
         public TelegramBot bot;
@@ -219,6 +220,8 @@ namespace WPF_ChatUI.MVVM.VIewModel
         {
             var ErrorMessage = exception.Message;
 
+            var obj = exception.InnerException;
+
             Console.WriteLine(ErrorMessage);
             return Task.CompletedTask;
         }
@@ -391,14 +394,24 @@ namespace WPF_ChatUI.MVVM.VIewModel
         {
             
             UserProfilePhotos userProfilePhotos = await botClient.GetUserProfilePhotosAsync(update.Message.From.Id, 0, 1);
-
+            PhotoSize[] photoSize;
             //user profile prhotos is array of the different proportions of height and weight. Choose the smallest one
-            PhotoSize[] photoSize = userProfilePhotos.Photos[0];
-            var fileID = photoSize[0].FileId;
-            Console.WriteLine(fileID);
+            if (userProfilePhotos.TotalCount !=0)
+            {
+                photoSize = userProfilePhotos.Photos[0];
+                var fileID = photoSize[1].FileId;
+                Console.WriteLine(fileID);
+
+                await DownloadAsync(fileID, userPath + update.Message.Chat.Username + "ProfilePic" + ".jpg", (TelegramBotClient)botClient);
+                return userPath + update.Message.Chat.Username + "ProfilePic" + ".jpg";
+            }
+            else
+            {
+                return "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Anonymous.svg/433px-Anonymous.svg.png";
+            }
+            
+            
            
-            await DownloadAsync(fileID, userPath + update.Message.Chat.Username + "ProfilePic" + ".jpg", (TelegramBotClient)botClient);
-            return userPath + update.Message.Chat.Username + "ProfilePic" + ".jpg";
         }
 
         /// <summary>

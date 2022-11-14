@@ -1,0 +1,117 @@
+[
+  {
+    "Username": "SuburbanSchedule_Bot",
+    "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+    "UserId": "5201175628",
+    "Messages": [
+      {
+        "Username": "SuburbanSchedule_Bot",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+        "Message": "Welcome to the SavedMessages",
+        "Time": "0001-01-01T00:00:00",
+        "IsFirstMessage": true
+      }
+    ],
+    "ChatId": 0,
+    "LastMessage": "Welcome to the Save..."
+  },
+  {
+    "Username": "y_brbx",
+    "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+    "UserId": "545466966",
+    "UserPath": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\",
+    "Messages": [
+      {
+        "Username": "y_brbx",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+        "Message": "Hi, i'm new here! Greetings!",
+        "Time": "2022-11-14T18:10:34.5115595+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "y_brbx",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+        "Message": "/start",
+        "Time": "2022-11-14T18:10:35.6850235+03:00",
+        "IsFirstMessage": false
+      },
+      {
+        "Username": "SuburbanSchedule_Bot",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+        "Message": "\tWelcome to the training bot!✅\nDescription of Bot Commands below✏\n/start - say hi to bot and view this message✏\n/menu - show command keyboard✏\n/info - show info about this bot✏",
+        "Time": "2022-11-14T18:10:35.693001+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "SuburbanSchedule_Bot",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+        "Message": "авофвыа",
+        "Time": "2022-11-14T18:10:45.8095242+03:00",
+        "IsFirstMessage": false
+      },
+      {
+        "Username": "y_brbx",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+        "Message": "/menu",
+        "Time": "2022-11-14T18:10:50.8267154+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "SuburbanSchedule_Bot",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+        "Message": "\tOn this page you can choose following functions♿\nYou can store the following file types:\n📷 Photos!\n📃 Documents!\n🎵 Audio\n 🎦 Video and VideoNotes\n🎤 VoiceMessage\n♿ Get the names of files from bot's storage♿\n♿Download the file from storage. To begin this operations check the existing files ♿",
+        "Time": "2022-11-14T18:10:50.8317009+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "y_brbx",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+        "Message": "I want to know, which files are already in the bot's storage",
+        "Time": "2022-11-14T18:10:53.3070849+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "SuburbanSchedule_Bot",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+        "Message": "List of Files below🤔:\n📷y_brbxGwb.jpg\n📷y_brbxProfilePic.jpg\n",
+        "Time": "2022-11-14T18:10:53.3210471+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "y_brbx",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+        "Message": "I want to get y_brbxProfilePic.jpg from bot's storage",
+        "Time": "2022-11-14T18:11:02.7588187+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "SuburbanSchedule_Bot",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\SuburbanSchedule_BotProfilePic.jpg",
+        "Message": "Bot is sending you the choosen file",
+        "Time": "2022-11-14T18:11:02.7588187+03:00",
+        "IsFirstMessage": true
+      },
+      {
+        "Username": "y_brbx",
+        "UserNameColor": "Black",
+        "ImageSource": "C:\\Users\\funn1\\source\\repos\\WPF_ChatUI\\WPF_ChatUI\\bin\\Debug\\DownloadFiles\\\\y_brbx\\y_brbxProfilePic.jpg",
+        "Message": "спасибо",
+        "Time": "2022-11-14T18:11:19.8700772+03:00",
+        "IsFirstMessage": true
+      }
+    ],
+    "ChatId": 545466966,
+    "LastMessage": "авофвыа"
+  }
+]
