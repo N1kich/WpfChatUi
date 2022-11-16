@@ -110,15 +110,25 @@ namespace WPF_ChatUI
             {
                 JsonSerializer serializer = new JsonSerializer();
                 serializer.NullValueHandling = NullValueHandling.Ignore;
-
-
-                using (StreamWriter sw = new StreamWriter(mainViewModel.bot.FullPath + "Contacts.json"))
-                using (JsonWriter writer = new JsonTextWriter(sw))
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "Json files (*.json)|*.json";
+                saveFileDialog.Title = "Save a ChatHistory File";
+                saveFileDialog.ShowDialog();
+                if (saveFileDialog.FileName != "")
                 {
-                    writer.Formatting = Formatting.Indented;
-                    serializer.Serialize(writer, mainViewModel.Contacts);
+                    using (StreamWriter sw = new StreamWriter(saveFileDialog.FileName))
+                    using (JsonWriter writer = new JsonTextWriter(sw))
+                    {
+                        writer.Formatting = Formatting.Indented;
+                        serializer.Serialize(writer, mainViewModel.Contacts);
 
+                    }
                 }
+                else
+                {
+                    System.Windows.MessageBox.Show("Please, enter a fileName to save chat history in it", "Caption", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+                
             }
             else
             {
@@ -137,6 +147,7 @@ namespace WPF_ChatUI
             {
                 OpenFileDialog ofd = new OpenFileDialog();
                 ofd.InitialDirectory = mainViewModel.bot.FullPath;
+                ofd.Title = "Upload Chat History FileDialog";
                 ofd.Filter = "Json files (*.json)|*.json";
 
                 DialogResult result = ofd.ShowDialog();
