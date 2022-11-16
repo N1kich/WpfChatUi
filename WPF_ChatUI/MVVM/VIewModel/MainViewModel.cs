@@ -34,7 +34,7 @@ namespace WPF_ChatUI.MVVM.VIewModel
 
         //const string for bot token
         //--------------------------------------
-        const string botToken = "5201175628:AAHf_MxWSWsg8Qbz3e0zOGzfV2It8DtralU";
+        const string botToken = "INSERT YOUR BOT TOKEN HERE";
         //--------------------------------------
         public TelegramBot bot;
 
