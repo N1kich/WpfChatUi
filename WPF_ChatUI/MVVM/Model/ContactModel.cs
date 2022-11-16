@@ -5,12 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
-
+using WPF_ChatUI.Core;
 
 namespace WPF_ChatUI.MVVM.Model
 {
     [Serializable]
-    internal class ContactModel
+    internal class ContactModel : ObservableObject
     {
         public string Username { get; set; }
         public string ImageSource { get; set; }
@@ -20,21 +20,12 @@ namespace WPF_ChatUI.MVVM.Model
 
         public long ChatId { get; set; }
 
-        public string LastMessage { get; set; }
-
-        public void GetLastMsg()
-        {
-            if (Messages.Last().Message.Length >= 22)
-            {
-                LastMessage = Messages.Last().Message.Substring(0, 19) + "...";
-            }
-            else
-            {
-                LastMessage = Messages.Last().Message;
-            }
-            
-        }
-
         
+        public string LastMessage => Messages.Last().Message; 
+        
+
+
+       
+
     }
 }

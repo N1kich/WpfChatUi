@@ -38,6 +38,11 @@ namespace WPF_ChatUI
 
         }
 
+        /// <summary>
+        /// move chat window by clicking on window border
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
@@ -46,11 +51,21 @@ namespace WPF_ChatUI
             }
         }
 
+        /// <summary>
+        /// method to minimize chat window by clicking on button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ButtonMinimize_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.MainWindow.WindowState = WindowState.Minimized;
         }
 
+        /// <summary>
+        /// method to maximaze chat window by clicking on button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ButtonMaximaze_Click(object sender, RoutedEventArgs e)
         {
             if (Application.Current.MainWindow.WindowState != WindowState.Maximized)
@@ -60,12 +75,22 @@ namespace WPF_ChatUI
 
         }
 
+        /// <summary>
+        /// method to kill chat window by clicking on button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ButtonClose_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
 
+        /// <summary>
+        /// method to initialize bot 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void BotInitialize_Img_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             await mainViewModel.BotInitialize();
@@ -73,49 +98,67 @@ namespace WPF_ChatUI
             BotInitialize_Img.IsHitTestVisible = false;
         }
 
+
+        /// <summary>
+        /// Save chat history into json file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ButtonSaveMessages_Click(object sender, RoutedEventArgs e)
         {
-
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
-
-
-            using (StreamWriter sw = new StreamWriter(mainViewModel.bot.FullPath + "Contacts.json"))
-            using (JsonWriter writer = new JsonTextWriter(sw))
+            if ((string)BotInitialize_Label.Content == "BOT IS ON")
             {
-                writer.Formatting = Formatting.Indented;
-                serializer.Serialize(writer, mainViewModel.Contacts);
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.NullValueHandling = NullValueHandling.Ignore;
 
+
+                using (StreamWriter sw = new StreamWriter(mainViewModel.bot.FullPath + "Contacts.json"))
+                using (JsonWriter writer = new JsonTextWriter(sw))
+                {
+                    writer.Formatting = Formatting.Indented;
+                    serializer.Serialize(writer, mainViewModel.Contacts);
+
+                }
             }
-
-            //openFileDialog.Filter = "Json files (*.json)|*.json";
-
+            else
+            {
+                System.Windows.MessageBox.Show("Please, initialize Bot by clicking on Bot's image", "Caption", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
+        /// <summary>
+        /// Upload chat history
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ButtonUploadMessages_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.InitialDirectory = mainViewModel.bot.FullPath;
-            ofd.Filter = "Json files (*.json)|*.json";
-
-            DialogResult result = ofd.ShowDialog();
-
-
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if ((string)BotInitialize_Label.Content == "BOT IS ON")
             {
-                Task.Run(() =>
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.InitialDirectory = mainViewModel.bot.FullPath;
+                ofd.Filter = "Json files (*.json)|*.json";
+
+                DialogResult result = ofd.ShowDialog();
+
+
+                if (result == System.Windows.Forms.DialogResult.OK)
                 {
-                    Dispatcher.Invoke(() =>
+
+                    ObservableCollection<ContactModel> tempContacts = JsonConvert.DeserializeObject<ObservableCollection<ContactModel>>(File.ReadAllText(ofd.FileName));
+                    mainViewModel.Contacts.Clear();
+                    foreach (var item in tempContacts)
                     {
-                        ObservableCollection<ContactModel> tempContacts = JsonConvert.DeserializeObject<ObservableCollection<ContactModel>>(File.ReadAllText(ofd.FileName));
-                        mainViewModel.Contacts.Clear();
-                        foreach (var item in tempContacts)
-                        {
-                            mainViewModel.Contacts.Add(item);
-                        }
-                    });                
-                });
+                        mainViewModel.Contacts.Add(item);
+                    }
+
+                }
+            } 
+            else
+            {
+                System.Windows.MessageBox.Show("Please, initialize Bot by clicking on Bot's image", "Caption", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+            
 
         }
     }

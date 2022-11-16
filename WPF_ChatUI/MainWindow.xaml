@@ -11,8 +11,8 @@
         WindowStyle="None"
         AllowsTransparency="True"
         ResizeMode="CanResizeWithGrip">
+ 
     <Grid>
-
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition/>
@@ -93,15 +93,15 @@
                 </Button>
 
             </StackPanel>
-
-
+            
             <ListView ItemsSource="{Binding Contacts}"
-                      SelectedItem="{Binding SelectedContact}"
-                      Grid.Row="1"
-                      Background="Transparent"
-                      BorderThickness="0"
-                      ItemContainerStyle="{StaticResource ContactCard}" 
-                      Name="Contacts_lView"/>
+                    SelectedItem="{Binding SelectedContact}"                      
+                    Grid.Row="1"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ItemContainerStyle="{StaticResource ContactCard}" 
+                    Name="Contacts_lView"                                       
+                    />
 
             <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
@@ -202,15 +202,21 @@
                 </Grid>
             </Border>
 
-            <ListView ItemsSource="{Binding SelectedContact.Messages}"
+            <ScrollViewer Style="{DynamicResource ResourceKey=ScrollBar}" Grid.Column="2" Grid.Row="1">
+
+                <ListView ItemsSource="{Binding SelectedContact.Messages}"
                       Grid.Column="2"
                       Grid.Row="1"
                       Background="Transparent"
                       BorderThickness="0"
                       ItemContainerStyle="{StaticResource ChatItem}"
                       Margin="8,0,0,0"
-                      Name ="MessageBox_lView"
+                      x:Name ="MessageBox_lView"   
+                      
                       />
+                
+            </ScrollViewer>
+            
 
             <Grid Grid.Row="2" ShowGridLines="False">
                 <Grid.ColumnDefinitions>

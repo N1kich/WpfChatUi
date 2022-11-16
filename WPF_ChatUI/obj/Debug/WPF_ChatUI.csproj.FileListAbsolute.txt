@@ -32,3 +32,4 @@ C:\Users\funn1\source\repos\WPF_ChatUI\WPF_ChatUI\obj\Debug\WPF_ChatUI.csproj.Co
 C:\Users\funn1\source\repos\WPF_ChatUI\WPF_ChatUI\obj\Debug\WPF_ChatUI.csproj.CopyComplete
 C:\Users\funn1\source\repos\WPF_ChatUI\WPF_ChatUI\obj\Debug\WPF_ChatUI.exe
 C:\Users\funn1\source\repos\WPF_ChatUI\WPF_ChatUI\obj\Debug\WPF_ChatUI.pdb
+C:\Users\funn1\source\repos\WPF_ChatUI\WPF_ChatUI\obj\Debug\Themes\ScrollThumbs.baml

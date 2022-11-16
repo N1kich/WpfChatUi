@@ -32,6 +32,10 @@ namespace WPF_ChatUI.MVVM.VIewModel
         
         public ObservableCollection<ContactModel> Contacts { get; set; }
 
+        //const string for bot token
+        //--------------------------------------
+        const string botToken = "INSERT YOUR BOT TOKEN HERE";
+        //--------------------------------------
         public TelegramBot bot;
 
         //dictionary for emoji's code
@@ -63,19 +67,20 @@ namespace WPF_ChatUI.MVVM.VIewModel
             //get a link on current mainWindow object
             this.mainWindow = mainWindow;
 
-            bot = new TelegramBot();
+            bot = new TelegramBot(botToken);
 
             Contacts = new ObservableCollection<ContactModel>();
             SelectedContact = new ContactModel();
 
             SendCommand = new RelayCommand( async o =>
             {
+
                 //checking empty message from messageBox
                 if (Message == "")
                 {
                     MessageBox.Show("Your message is empty!", "Warning!", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
-                else
+                else if(SelectedContact.UserId != null )
                 {
                     var selectedContact = SelectedContact;
                     bool isFirstMessage = (selectedContact.Messages.Last().Username == bot.botModel.Username) ? false : true;
@@ -91,12 +96,17 @@ namespace WPF_ChatUI.MVVM.VIewModel
                     });
 
                     //get the last message in messageCollection: Didnt work!!!
-                    selectedContact.GetLastMsg();
+                   //selectedContact.LastMessage
                                         
                     if (SelectedContact.Username != bot.botModel.Username)
                     {
                         await bot.telegramBotUser.SendTextMessageAsync(selectedContact.ChatId, Message);
                     }
+                    Message = "";
+                }
+                else
+                {
+                    MessageBox.Show("Please, select a contact to send this message", "Warning!", MessageBoxButton.OK, MessageBoxImage.Warning);
                     Message = "";
                 }
                                 
@@ -149,7 +159,7 @@ namespace WPF_ChatUI.MVVM.VIewModel
             //add information to form
             mainWindow.Dispatcher.Invoke(() =>
             {
-                bot.botModel.GetLastMsg();
+               
                 Contacts.Add(bot.botModel);
             });
             
@@ -377,7 +387,7 @@ namespace WPF_ChatUI.MVVM.VIewModel
             
             mainWindow.Dispatcher.Invoke(() =>
             {
-                contact.GetLastMsg();
+                
                 Contacts.Add(contact);
             });
             
